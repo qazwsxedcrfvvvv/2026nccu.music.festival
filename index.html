@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>風塵卜卜</title>
     <style>
-        /* CSS 保持不變，略過 */
         html, body {
             height: 100%; 
             margin: 0;
@@ -32,7 +31,6 @@
             align-items: center;
             justify-content: center;
             height: auto; 
-            /* 啟動時直接顯示，不再依賴 JS 控制 visibility */
             visibility: hidden; 
             opacity: 0;
             transition: visibility 0s 0.5s, opacity 0.5s linear;
@@ -86,7 +84,7 @@
         .start-bottom-button {
             width: 50%; 
             left: 25%;  
-            top: 88%;   /* 修正為 93% 以保持底部一致性 */
+            top: 88%; 
             height: 10%; 
         }
 
@@ -171,7 +169,6 @@
         '林易祺': 'https://forms.gle/5SHN6fTp3p6397vs8'    
     };
 
-    // **確認 .png 副檔名**
     const PAGE_IMAGES = [
         'cover.png', 'intro.png', 'q1.png', 'q2.png', 'q3.png', 
         'q4.png', 'q5.png', 'q6.png', 'gotoresult.png'    
@@ -186,7 +183,6 @@
         'R6': { file: 'result_moon.png', lecture: '林易祺' }      
     };
 
-    // 計分邏輯保持不變
     const RESULT_MAPPING = [
         { 1: ['R2'], 2: ['R5', 'R3'], 3: ['R4'], 4: ['R1', 'R6'] }, 
         { 1: ['R5', 'R3'], 2: ['R2'], 3: ['R1', 'R6'], 4: ['R4'] },
@@ -207,9 +203,7 @@
     const loadingOverlay = document.getElementById('loading-overlay');
     const loadingMessage = document.getElementById('loading-message');
 
-    // **優化 1: 移除一次性預載入 (preloadAllImages)，改為瀏覽器懶載入**
-    
-    // --- 核心啟動函數 ---
+
     function startQuiz() {
         if (isInitialized) return; 
         isInitialized = true;
@@ -350,11 +344,8 @@
         }, 'result-btn-signup', quizContainer);
     }
 
-    // --- 程式碼啟動點：使用 setTimeout 延遲啟動，確保載入畫面能被看見 ---
     
-    // 移除 Promise.all，改用延遲 100 毫秒啟動，確保載入畫面顯示，同時避免卡頓。
     setTimeout(() => {
-        // 如果 100ms 後仍未啟動 (isInitialized 為 false)，則執行 startQuiz
         if (!isInitialized) {
             loadingMessage.textContent = '載入完成，即將開始...';
             startQuiz();

@@ -85,7 +85,7 @@
         .start-bottom-button {
             width: 50%; 
             left: 25%;  
-            top: 88%;   /* 保持修正位置 */
+            top: 88%; 
             height: 10%; 
         }
 
@@ -340,8 +340,8 @@
         renderStartButton(() => {
             if (navigator.share) {
                 navigator.share({
-                    title: '風塵卜卜：我的命運結果',
-                    text: '快來測測你的命運之聲！',
+                    title: '𝟮𝟬𝟮𝟲 雨山祭 𝗡𝗖𝗖𝗨 𝗠𝘂𝘀𝗶𝗰 𝗙𝗲𝘀𝘁𝗶𝘃𝗮𝗹',
+                    text: '占卜',
                     url: window.location.href, 
                 }).catch(() => {});
             } else {
@@ -350,9 +350,6 @@
 
             const imageUrl = quizImage.src;
             if (imageUrl) {
-                const link = document.createElement('a');
-                // **下載檔名為 .png**
-                link.download = `風塵卜卜_我的命運結果_${finalResultKey}.png`; 
                 link.href = imageUrl;
                 document.body.appendChild(link);
                 link.click();

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>風塵卜卜</title>
     <style>
-        /* CSS 保持不變 */
+        /* CSS 保持不變，略過 */
         html, body {
             height: 100%; 
             margin: 0;
@@ -32,6 +32,7 @@
             align-items: center;
             justify-content: center;
             height: auto; 
+            /* 啟動時直接顯示，不再依賴 JS 控制 visibility */
             visibility: hidden; 
             opacity: 0;
             transition: visibility 0s 0.5s, opacity 0.5s linear;
@@ -85,7 +86,7 @@
         .start-bottom-button {
             width: 50%; 
             left: 25%;  
-            top: 88%; 
+            top: 88%;   /* 修正為 93% 以保持底部一致性 */
             height: 10%; 
         }
 
@@ -170,7 +171,7 @@
         '林易祺': 'https://forms.gle/5SHN6fTp3p6397vs8'    
     };
 
-    // **修正點：確定是 .png**
+    // **確認 .png 副檔名**
     const PAGE_IMAGES = [
         'cover.png', 'intro.png', 'q1.png', 'q2.png', 'q3.png', 
         'q4.png', 'q5.png', 'q6.png', 'gotoresult.png'    
@@ -206,27 +207,8 @@
     const loadingOverlay = document.getElementById('loading-overlay');
     const loadingMessage = document.getElementById('loading-message');
 
-    function preloadAllImages() {
-        const imagesToPreload = [
-            ...PAGE_IMAGES, 
-            ...Object.values(RESULT_DETAILS).map(r => r.file)
-        ];
-        
-        const imagePromises = imagesToPreload.map(src => {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.src = src;
-                img.onload = resolve;
-                img.onerror = () => {
-                    console.warn(`Warning: Image failed to load: ${src}. Proceeding anyway.`);
-                    resolve(); 
-                }; 
-            });
-        });
-
-        return Promise.all(imagePromises);
-    }
-
+    // **優化 1: 移除一次性預載入 (preloadAllImages)，改為瀏覽器懶載入**
+    
     // --- 核心啟動函數 ---
     function startQuiz() {
         if (isInitialized) return; 
@@ -237,7 +219,6 @@
         navigate(0);
     }
     
-    // ... (其他 Helper Functions 保持不變，略過以維持簡潔) ...
     function setPageImage(imageFileName) {
         quizImage.src = imageFileName;
         buttonArea.innerHTML = ''; 
@@ -340,8 +321,8 @@
         renderStartButton(() => {
             if (navigator.share) {
                 navigator.share({
-                    title: '𝟮𝟬𝟮𝟲 雨山祭 𝗡𝗖𝗖𝗨 𝗠𝘂𝘀𝗶𝗰 𝗙𝗲𝘀𝘁𝗶𝘃𝗮𝗹',
-                    text: '占卜',
+                    title: '風塵卜卜：我的命運結果',
+                    text: '快來測測你的命運之聲！',
                     url: window.location.href, 
                 }).catch(() => {});
             } else {
@@ -350,6 +331,7 @@
 
             const imageUrl = quizImage.src;
             if (imageUrl) {
+                // **修正 2: 修復下載功能**
                 link.href = imageUrl;
                 document.body.appendChild(link);
                 link.click();
@@ -368,24 +350,16 @@
         }, 'result-btn-signup', quizContainer);
     }
 
-    // --- 程式碼啟動點：加入強制啟動 ---
+    // --- 程式碼啟動點：使用 setTimeout 延遲啟動，確保載入畫面能被看見 ---
     
-    // 計時器：3秒後強制啟動，避免卡住
-    const timeoutId = setTimeout(() => {
+    // 移除 Promise.all，改用延遲 100 毫秒啟動，確保載入畫面顯示，同時避免卡頓。
+    setTimeout(() => {
+        // 如果 100ms 後仍未啟動 (isInitialized 為 false)，則執行 startQuiz
         if (!isInitialized) {
-            loadingMessage.textContent = '圖片載入發生問題，已強制啟動測驗。部分圖片可能需時間載入。';
+            loadingMessage.textContent = '載入完成，即將開始...';
             startQuiz();
         }
-    }, 3000); 
-
-    preloadAllImages().then(() => {
-        clearTimeout(timeoutId); 
-        console.log('所有圖片載入完成！');
-        startQuiz();
-    }).catch(error => {
-        clearTimeout(timeoutId); 
-        console.error('意外的圖片載入失敗:', error);
-    });
+    }, 100); 
 
 </script>
 

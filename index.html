@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>風塵卜卜</title>
     <style>
+        /* CSS 樣式 */
         html, body {
             height: 100%; 
             margin: 0;
@@ -66,6 +67,7 @@
             border: none;                  
             cursor: pointer;
             z-index: 10; 
+            /* 隱藏按鈕內容，只保留點擊區域 */
             color: transparent !important; 
             font-size: 0 !important;       
             line-height: 0 !important;     
@@ -88,11 +90,21 @@
             height: 10%; 
         }
 
+        /* 選擇題的四個選項按鈕 */
         .q-btn-a { top: 48%; left: 10%; width: 80%; height: 7%; }
         .q-btn-b { top: 58%; left: 10%; width: 80%; height: 7%; }
         .q-btn-c { top: 68%; left: 10%; width: 80%; height: 7%; }
         .q-btn-d { top: 78%; left: 10%; width: 80%; height: 7%; }
-
+        
+        /* **新增：回到上一題按鈕樣式** */
+        .q-btn-back { 
+            width: 25%;     /* 調整寬度 */
+            left: 10%;      /* 放置在左下角 */
+            top: 88%;       /* 靠近底部，與結果頁按鈕對齊 */
+            height: 10%; 
+        }
+        
+        /* 結果頁的按鈕 */
         .result-btn-share {
             top: 90%; 
             left: 8%; 
@@ -112,6 +124,7 @@
             height: 7%;
         }
 
+        /* 載入畫面 */
         #loading-overlay {
             position: absolute;
             top: 0;
@@ -156,33 +169,37 @@
 </div>
 
 <div class="quiz-container">
-    <img id="quiz-image" src="cover.png" alt="測驗封面">
+    <img id="quiz-image" src="cover.jpg" alt="測驗封面">
     
     <div id="button-area">
         </div>
 </div>
 
 <script>
+    // 講者連結
     const LECTURE_URLS = {
         '捏捏': 'https://forms.gle/PvwhsYqJ7uAAqcrQ8',     
         '劉又熊': 'https://forms.gle/4C3PAuXNZKUm4CN98',   
         '林易祺': 'https://forms.gle/5SHN6fTp3p6397vs8'    
     };
 
+    // 頁面圖片 (已將副檔名從 .png 改為 .jpg，以符合您上傳的檔案)
     const PAGE_IMAGES = [
-        'cover.png', 'intro.png', 'q1.png', 'q2.png', 'q3.png', 
-        'q4.png', 'q5.png', 'q6.png', 'gotoresult.png'    
+        'cover.jpg', 'intro.jpg', 'q1.jpg', 'q2.jpg', 'q3.jpg', 
+        'q4.jpg', 'q5.jpg', 'q6.jpg', 'gotoresult.jpg'    
     ];
     
+    // 結果頁圖片與對應講者 (已將副檔名從 .png 改為 .jpg)
     const RESULT_DETAILS = {
-        'R1': { file: 'result_star.png', lecture: '捏捏' },      
-        'R2': { file: 'result_sun.png', lecture: '捏捏' },       
-        'R3': { file: 'result_foggy.png', lecture: '劉又熊' },    
-        'R4': { file: 'result_sunset.png', lecture: '劉又熊' },   
-        'R5': { file: 'result_dawn.png', lecture: '林易祺' },     
-        'R6': { file: 'result_moon.png', lecture: '林易祺' }      
+        'R1': { file: 'result_star.jpg', lecture: '捏捏' },      
+        'R2': { file: 'result_sun.jpg', lecture: '捏捏' },       
+        'R3': { file: 'result_foggy.jpg', lecture: '劉又熊' },    
+        'R4': { file: 'result_sunset.jpg', lecture: '劉又熊' },   
+        'R5': { file: 'result_dawn.jpg', lecture: '林易祺' },     
+        'R6': { file: 'result_moon.jpg', lecture: '林易祺' }      
     };
 
+    // 結果配對邏輯 (保持不變)
     const RESULT_MAPPING = [
         { 1: ['R2'], 2: ['R5', 'R3'], 3: ['R4'], 4: ['R1', 'R6'] }, 
         { 1: ['R5', 'R3'], 2: ['R2'], 3: ['R1', 'R6'], 4: ['R4'] },
@@ -193,7 +210,7 @@
     ];
 
     let currentPage = 0; 
-    let userAnswers = []; 
+    let userAnswers = []; // 儲存用戶答案
     let finalResultKey = '';
     let isInitialized = false; 
 
@@ -203,7 +220,7 @@
     const loadingOverlay = document.getElementById('loading-overlay');
     const loadingMessage = document.getElementById('loading-message');
 
-
+    // --- 核心導航和渲染函數 ---
     function startQuiz() {
         if (isInitialized) return; 
         isInitialized = true;
@@ -216,50 +233,70 @@
     function setPageImage(imageFileName) {
         quizImage.src = imageFileName;
         buttonArea.innerHTML = ''; 
+        // 清除結果頁面附加在 quizContainer 上的按鈕
         document.querySelectorAll('.quiz-container > .option-button').forEach(btn => {
             btn.remove();
         });
     }
 
-    function renderStartButton(callback, buttonClass, parentElement) {
+    // 渲染按鈕的通用函數
+    function renderButton(callback, buttonClass, parentElement) {
         const button = document.createElement('button');
         button.className = `option-button ${buttonClass}`; 
         button.onclick = callback;
         parentElement.appendChild(button);
     }
 
+    // **新增：回上一題功能**
+    function goBack() {
+        if (currentPage > 0) {
+            // 在回退時，將當前問題的答案從 userAnswers 中移除 (可選，但保持狀態更清晰)
+            if (currentPage >= 2 && currentPage <= 7) {
+                userAnswers[currentPage - 2] = undefined; 
+            }
+            navigate(currentPage - 1);
+        }
+    }
+
     function renderQuizButtons(questionIndex, parentElement) {
         const classes = ['q-btn-a', 'q-btn-b', 'q-btn-c', 'q-btn-d'];
+        
+        // 渲染 4 個選項按鈕
         for (let i = 0; i < 4; i++) {
-            const button = document.createElement('button');
             const answerValue = i + 1; 
-            
-            button.className = `option-button ${classes[i]}`;
-            button.onclick = () => {
+            renderButton(() => {
+                // 儲存答案
                 userAnswers[questionIndex] = answerValue;
+                
                 if (questionIndex < 5) {
                     navigate(currentPage + 1);
                 } else {
-                    navigate(8); 
+                    navigate(8); // 前往 gotoresult 頁面
                 }
-            };
-            parentElement.appendChild(button);
+            }, classes[i], parentElement);
+        }
+        
+        // **新增：回到上一頁按鈕**
+        // Q1 (index 2) 是從 intro (index 1) 跳過來的，所以從 Q1 開始就可以回退。
+        if (currentPage > 2) { 
+             renderButton(goBack, 'q-btn-back', parentElement);
         }
     }
 
     function navigate(nextPage) {
         currentPage = nextPage;
+        
         if (currentPage < PAGE_IMAGES.length) {
             setPageImage(PAGE_IMAGES[currentPage]);
             
-            if (currentPage === 0) {
-                renderStartButton(() => navigate(1), 'start-cover-button', buttonArea); 
-            } else if (currentPage === 1) {
-                renderStartButton(() => navigate(2), 'start-bottom-button', buttonArea); 
-            } else if (currentPage >= 2 && currentPage <= 7) {
+            if (currentPage === 0) { // cover.jpg (index 0)
+                renderButton(() => navigate(1), 'start-cover-button', buttonArea); 
+            } else if (currentPage === 1) { // intro.jpg (index 1)
+                renderButton(() => navigate(2), 'start-bottom-button', buttonArea); 
+            } else if (currentPage >= 2 && currentPage <= 7) { 
                 renderQuizButtons(currentPage - 2, buttonArea); 
-            } else if (currentPage === 8) {
-                renderStartButton(calculateResult, 'start-bottom-button', buttonArea); 
+            } else if (currentPage === 8) { // gotoresult.jpg (index 8)
+                renderButton(calculateResult, 'start-bottom-button', buttonArea); 
             }
         } 
     }
@@ -312,7 +349,8 @@
         const result = RESULT_DETAILS[finalResultKey];
         setPageImage(result.file);
 
-        renderStartButton(() => {
+        // 分享按鈕 
+        renderButton(() => {
             if (navigator.share) {
                 navigator.share({
                     title: '風塵卜卜：我的命運結果',
@@ -325,7 +363,6 @@
 
             const imageUrl = quizImage.src;
             if (imageUrl) {
-                // **修正 2: 修復下載功能**
                 link.href = imageUrl;
                 document.body.appendChild(link);
                 link.click();
@@ -333,18 +370,20 @@
             }
         }, 'result-btn-share', quizContainer);
 
-        renderStartButton(() => {
+        // 重玩按鈕 
+        renderButton(() => {
             userAnswers = []; 
             navigate(0); 
         }, 'result-btn-replay', quizContainer);
 
-        renderStartButton(() => {
+        // 報名按鈕 
+        renderButton(() => {
             const lectureUrl = LECTURE_URLS[result.lecture];
             window.open(lectureUrl, '_blank'); 
         }, 'result-btn-signup', quizContainer);
     }
 
-    
+    // --- 程式碼啟動點 ---
     setTimeout(() => {
         if (!isInitialized) {
             loadingMessage.textContent = '載入完成，即將開始...';
